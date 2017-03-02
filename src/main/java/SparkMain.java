@@ -11,7 +11,10 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
-        Dataset<Row> ds = sparkSession.read().csv("airbnb_datasets/reviews_us.csv");
+        Dataset<Row> ds = sparkSession
+                .read()
+                .option("header", true)
+                .csv("airbnb_datasets/reviews_us.csv");
         ds.show();
 
     }
