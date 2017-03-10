@@ -1,6 +1,11 @@
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
 import schemas.CalendarSchema;
 import schemas.ListingsSchema;
 import schemas.ReviewSchema;
@@ -10,6 +15,8 @@ public class SparkMain {
     private static Dataset<Row> getReviewDs(SparkSession sparkSession) {
         return sparkSession
                 .read()
+                .option("delimiter", "\t")
+                .option("header", true)
                 .schema(ReviewSchema.getReviewSchema())
                 .csv("airbnb_datasets/reviews_us.csv");
     }
@@ -17,6 +24,8 @@ public class SparkMain {
     private static Dataset<Row> getListingDs(SparkSession sparkSession) {
         return sparkSession
                 .read()
+                .option("delimiter", "\t")
+                .option("header", true)
                 .schema(ListingsSchema.getListingsSchema())
                 .csv("airbnb_datasets/listings_us.csv");
     }
@@ -24,6 +33,8 @@ public class SparkMain {
     private static Dataset<Row> getCalendarDs(SparkSession sparkSession) {
         return sparkSession
                 .read()
+                .option("delimiter", "\t")
+                .option("header", true)
                 .schema(CalendarSchema.getCalendarSchema())
                 .csv("airbnb_datasets/calendar_us.csv");
     }
@@ -41,6 +52,7 @@ public class SparkMain {
                 .appName("Airbnb analyis")
                 .master("local[*]")
                 .getOrCreate();
+
 
         Dataset<Row> ds = getReviewDs(sparkSession);
         ds.show();

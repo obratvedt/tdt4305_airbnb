@@ -11,7 +11,7 @@ public class CalendarSchema {
         StructType calendarSchema = DataTypes
                 .createStructType(new StructField[]{
                         DataTypes.createStructField("listing_id", DataTypes.IntegerType, true),
-                        DataTypes.createStructField("date", DataTypes.StringType, true),
+                        DataTypes.createStructField("date", DataTypes.DateType, true),
                         DataTypes.createStructField("available", DataTypes.StringType, true)
                 });
 

@@ -11,10 +11,10 @@ public class ReviewSchema {
 
         StructType reviewSchema = DataTypes
                 .createStructType(new StructField[]{
-                        DataTypes.createStructField("listing_id", DataTypes.StringType, true),
-                        DataTypes.createStructField("id", DataTypes.StringType, true),
-                        DataTypes.createStructField("date", DataTypes.StringType, true),
-                        DataTypes.createStructField("reviewer_id", DataTypes.StringType, true),
+                        DataTypes.createStructField("listing_id", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("id", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("date", DataTypes.DateType, true),
+                        DataTypes.createStructField("reviewer_id", DataTypes.IntegerType, true),
                         DataTypes.createStructField("reviewer_name", DataTypes.StringType, true),
                         DataTypes.createStructField("comment", DataTypes.StringType, true)
                 });
