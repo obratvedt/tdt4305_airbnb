@@ -11,10 +11,9 @@ public class ListingsSchema {
         StructType listingsSchema = DataTypes
                 .createStructType(new StructField[]{
                         DataTypes.createStructField("listing_id", DataTypes.StringType, true),
-                        DataTypes.createStructField("listing_id", DataTypes.StringType, true),
-                        DataTypes.createStructField("listing_id", DataTypes.StringType, true),
-                        DataTypes.createStructField("listing_id", DataTypes.StringType, true),
+                        DataTypes.createStructField("price", DataTypes.FloatType, true)
                 });
+
 
         return listingsSchema;
     }
