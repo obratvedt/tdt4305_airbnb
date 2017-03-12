@@ -17,4 +17,12 @@ public class ListingsSchema {
 
         return listingsSchema;
     }
+
+    public static StructType getCityPriceSchema(){
+        return DataTypes
+                .createStructType(new StructField[]{
+                        DataTypes.createStructField("city", DataTypes.StringType, true),
+                        DataTypes.createStructField("price", DataTypes.FloatType, true)
+                });
+    }
 }
