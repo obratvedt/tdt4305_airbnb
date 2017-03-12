@@ -3,6 +3,7 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.scalatest.EncodedOrdering;
 import scala.Tuple2;
+import scala.Tuple3;
 import schemas.ListingsSchema;
 import schemas.ReviewSchema;
 
@@ -90,37 +91,50 @@ public class SparkMain {
 
     /* Task 1.3 - 3 b) */
     private static void avgRoomTypePrice(Dataset<Row> listingsDs){
-        listingsDs.select("room_type", "price")
-                .map( row -> {
-                    String priceString = row.getString(1);
-                    float price = Float.valueOf(priceString
-                            .replace("$","")
-                            .replace(",",""));
-                    return new Tuple2<>(row.getString(0) ,price);
-                }, Encoders.tuple(Encoders.STRING(), Encoders.FLOAT()))
-                .toDF("room_type", "price")
-                .groupBy("room_type")
-                .agg(functions.avg("price").as("avgprice"))
-                .orderBy(functions.col("avgprice").desc())
-                .coalesce(1)
-                .write()
-                .csv("./output/avgRoomTypePrice");
+        listingsDs.select("city", "room_type", "price")
+                .map(row -> new Tuple3<String, String, Float>(row.getAs("city"), row.getAs("room_type"), Float.valueOf(
+                        ((String) row.getAs("price"))
+                                .replace("$", "")
+                                .replace(",", "")))
+                        , Encoders.tuple(Encoders.STRING(), Encoders.STRING(), Encoders.FLOAT()))
+                .toDF("city", "room_type", "price")
+                .groupBy( "city","room_type")
+                .agg(functions.avg("price"))
+                .orderBy(functions.col("city").asc())
+                .repartition(1)
+                .write().csv("output");
     }
 
     /* Task 1.3 - 3 c) */
-    private static void avgNumReviewPerMonth(Dataset<Row> reviewsDs){
-        reviewsDs
-                .select("id", "date")
+    private static void avgNumReviewPerMonth(Dataset<Row> reviewsDs, Dataset<Row> listingsDs){
+        Dataset<Row> joinedSet = reviewsDs
+                .select("listing_id","id", "date")
+                .join(listingsDs.select("city", "id"),
+                reviewsDs.col("listing_id").equalTo(listingsDs.col("id").as("listing_id")))
+                .toDF("listing_id", "id","date","city", "listing_id_2");
+
+        joinedSet
+                .select("id", "date", "city")
                 .map( row -> {
-                    String month = row.getString(1)
-                            .substring(7);
-                    return new Tuple2<Integer, String>(row.getInt(0), month);
-                }, Encoders.tuple(Encoders.INT(), Encoders.STRING()))
-                .groupBy("date")
+                    String month = row.getDate(1)
+                            .toString()
+                            .substring(0,7);
+                    return new Tuple3<>(row.getInt(0), month, row.getString(2));
+                }, Encoders.tuple(Encoders.INT(), Encoders.STRING(), Encoders.STRING()))
+                .toDF("id", "date", "city")
+                .groupBy("date","city")
                 .count()
+                .orderBy(functions.col("count").desc())
                 .coalesce(1)
                 .write()
                 .csv("./output/avgNumReviewPerMonth");
+    }
+
+    private void estimatedBookingsPerYear(Dataset<Row> reviewsDs){
+        double percentageWhoLeavesReview = 0.7;
+
+
+
     }
 
 
@@ -132,14 +146,15 @@ public class SparkMain {
                 .getOrCreate();
 
         Dataset<Row> reviewsDs = getReviewDs(sparkSession);
-        avgNumReviewPerMonth(reviewsDs);
-        reviewsDs.show();
-
-        //distinctListings(listingDs);
-        /*
         Dataset<Row> listingDs = getListingDs(sparkSession);
+        avgNumReviewPerMonth(reviewsDs, listingDs);
+        //reviewsDs.show();
+
+        /*
         avgCityPrice(listingDs);
         avgRoomTypePrice(listingDs);*/
+
+        //distinctListings(listingDs);
 
         /*
         ds.select("price")
