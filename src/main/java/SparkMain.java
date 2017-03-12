@@ -178,6 +178,16 @@ public class SparkMain {
                 .csv("./output/moneySpentPerYear");
     }
 
+    /* Task 1.3 - 4 a)*/
+    public static void avgListingsPerHost(Dataset<Row> listingsDs) {
+        listingsDs
+                .select("host_id")
+                .groupBy("host_id")
+                .count()
+                .agg(functions.avg("count")
+                        .as("averageNoOfListingsPerHost"))
+                .show();
+    }
 
     public static void main(String[] args) {
         SparkSession sparkSession = SparkSession
@@ -193,6 +203,7 @@ public class SparkMain {
         //estimatedBookingsPerYear(listingDs);
         //reviewsDs.show();
         //listingDs.show();
+        avgListingsPerHost(listingDs);
         /*
         avgCityPrice(listingDs);
         avgRoomTypePrice(listingDs);*/
