@@ -87,7 +87,7 @@ public class SparkMain {
 
     /* Task 1.3 - 3 b) */
     private static void avgRoomTypePrice(Dataset<Row> listingDs){
-        
+
     }
 
 
