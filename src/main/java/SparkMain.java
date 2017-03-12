@@ -1,6 +1,7 @@
 
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.scalatest.EncodedOrdering;
 import scala.Tuple2;
 import schemas.ListingsSchema;
 import schemas.ReviewSchema;
@@ -76,18 +77,50 @@ public class SparkMain {
                     float price = Float.valueOf(priceString
                             .replace("$","")
                             .replace(",",""));
-                    return new Tuple2<String, Float>(row.getString(0) ,price);
+                    return new Tuple2<>(row.getString(0) ,price);
                 }, Encoders.tuple(Encoders.STRING(), Encoders.FLOAT()))
                 .toDF("city", "price")
                 .groupBy("city")
                 .agg(functions.avg("price").as("avgprice"))
                 .orderBy(functions.col("avgprice").desc())
-                .show();
+                .coalesce(1)
+                .write()
+                .csv("./output/avgCityPrice");
     }
 
     /* Task 1.3 - 3 b) */
-    private static void avgRoomTypePrice(Dataset<Row> listingDs){
+    private static void avgRoomTypePrice(Dataset<Row> listingsDs){
+        listingsDs.select("room_type", "price")
+                .map( row -> {
+                    String priceString = row.getString(1);
+                    float price = Float.valueOf(priceString
+                            .replace("$","")
+                            .replace(",",""));
+                    return new Tuple2<>(row.getString(0) ,price);
+                }, Encoders.tuple(Encoders.STRING(), Encoders.FLOAT()))
+                .toDF("room_type", "price")
+                .groupBy("room_type")
+                .agg(functions.avg("price").as("avgprice"))
+                .orderBy(functions.col("avgprice").desc())
+                .coalesce(1)
+                .write()
+                .csv("./output/avgRoomTypePrice");
+    }
 
+    /* Task 1.3 - 3 c) */
+    private static void avgNumReviewPerMonth(Dataset<Row> reviewsDs){
+        reviewsDs
+                .select("id", "date")
+                .map( row -> {
+                    String month = row.getString(1)
+                            .substring(7);
+                    return new Tuple2<Integer, String>(row.getInt(0), month);
+                }, Encoders.tuple(Encoders.INT(), Encoders.STRING()))
+                .groupBy("date")
+                .count()
+                .coalesce(1)
+                .write()
+                .csv("./output/avgNumReviewPerMonth");
     }
 
 
@@ -98,11 +131,15 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
-
-        Dataset<Row> listingDs = getListingDs(sparkSession);
+        Dataset<Row> reviewsDs = getReviewDs(sparkSession);
+        avgNumReviewPerMonth(reviewsDs);
+        reviewsDs.show();
 
         //distinctListings(listingDs);
+        /*
+        Dataset<Row> listingDs = getListingDs(sparkSession);
         avgCityPrice(listingDs);
+        avgRoomTypePrice(listingDs);*/
 
         /*
         ds.select("price")
