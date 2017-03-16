@@ -39,6 +39,12 @@ public class Task2 {
                 .distinct()
                 .collectAsList();
 
+        long noOfCities = listingsDs
+                .select("city")
+                .distinct()
+                .count();
+        System.out.println("Number of cities: " + noOfCities);
+
         for (Row city : cities) {
             System.out.println(city.get(0));
         }

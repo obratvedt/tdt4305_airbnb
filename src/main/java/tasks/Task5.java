@@ -44,12 +44,12 @@ public class Task5 {
                         , listingsDs.col("id").equalTo(reviewsDs.col("listing_id")));
         joinedSet
                 .select("reviewer_id", "reviewer_name", "price")
-                .map(row -> new Tuple3<Integer, String, Float>(
+                .map(row -> new Tuple3<String, String, Float>(
                         row.getAs("reviewer_id"), row.getAs("reviewer_name"),
                         Float.valueOf(((String) row.getAs("price"))
                                 .replace("$", "")
                                 .replace(",", "")))
-                , Encoders.tuple(Encoders.INT(), Encoders.STRING(), Encoders.FLOAT()))
+                , Encoders.tuple(Encoders.STRING(), Encoders.STRING(), Encoders.FLOAT()))
                 .toDF("reviewer_id", "reviewer_name", "price")
                 .groupBy("reviewer_id", "reviewer_name")
                 .agg(sum(col("price")).as("total_price"))

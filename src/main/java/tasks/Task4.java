@@ -23,7 +23,7 @@ public class Task4 {
     }
 
     /* Task 1.3 - 4 b) */
-    public static long percentHostMoreMultipleListings(Dataset<Row> listingsDs) {
+    public static float percentHostMoreMultipleListings(Dataset<Row> listingsDs) {
         long all = listingsDs.count();
         long numHostMultipleListings = listingsDs.select("host_id", "id")
                 .groupBy("host_id")
@@ -34,7 +34,7 @@ public class Task4 {
         System.out.println("numWithMutiple:" + numHostMultipleListings);
 
         /* 11.5% of all hosts have multiple listings */
-        return (numHostMultipleListings / all);
+        return ((float)numHostMultipleListings / all);
     }
 
     /*  Task 1.3 - 4 c) */
@@ -66,10 +66,7 @@ public class Task4 {
                 .withColumn("rank", row_number().over(w))
                 .where(col("rank").$less$eq(3))
                 .drop("rank")
-                .coalesce(1)
-                .write()
-                .mode("overwrite")
-                .csv("./output/top3highestincomecities");
+                .show();
     }
 }
 
