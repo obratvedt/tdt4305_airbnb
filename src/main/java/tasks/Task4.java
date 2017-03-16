@@ -2,8 +2,13 @@ package tasks;
 
 
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.expressions.WindowSpec;
 import scala.Tuple3;
 import scala.Tuple4;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.row_number;
 
 public class Task4 {
     /* Task 1.3 - 4 a)*/
@@ -37,7 +42,7 @@ public class Task4 {
         Dataset<Row> availableCalendar = calendar
                 .filter(functions.col("available").equalTo("f"));
 
-        listings.select("id",  "city", "price", "host_id")
+        Dataset<Row> sumPrice= listings.select("id",  "city", "price", "host_id")
                 .map(row ->
                     new Tuple4<Integer, String, Float, Integer>(
                         row.getAs("id"),
@@ -52,8 +57,19 @@ public class Task4 {
                 .where("id = listing_id")
                 .groupBy("city","host_id")
                 .agg(functions.sum("price").as("sum_price"))
-                .orderBy("sum_price")
-                .show();
+                .orderBy("sum_price");
+
+        WindowSpec w = Window.partitionBy(sumPrice.col("city"))
+                .orderBy(sumPrice.col("sum_price").desc());
+
+        sumPrice
+                .withColumn("rank", row_number().over(w))
+                .where(col("rank").$less$eq(3))
+                .drop("rank")
+                .coalesce(1)
+                .write()
+                .mode("overwrite")
+                .csv("./output/top3highestincomecities");
     }
 }
 

@@ -7,7 +7,10 @@ import scala.Tuple2;
 import scala.Tuple3;
 import schemas.ListingsSchema;
 import schemas.ReviewSchema;
+import tasks.Task2;
 import tasks.Task3;
+import tasks.Task4;
+import tasks.Task5;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,7 @@ public class SparkMain {
                 .option("header", true)
                 .option("inferschema", true)
                 .csv("airbnb_datasets/calendar_us.csv");
+
     }
 
     //Not working yet, need a parser.
@@ -57,10 +61,8 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
-        Dataset<Row> reviewsDs = getReviewDs(sparkSession);
-        Dataset<Row> listingDs = getListingDs(sparkSession);
-        
 
+        
     }
 
 }
