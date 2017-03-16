@@ -25,6 +25,7 @@ public class Task3 {
                 .orderBy(functions.col("avgprice").desc())
                 .coalesce(1)
                 .write()
+                .mode("overwrite")
                 .csv("./output/avgCityPrice");
     }
 
@@ -40,33 +41,23 @@ public class Task3 {
                 .groupBy("city", "room_type")
                 .agg(functions.avg("price"))
                 .orderBy(functions.col("city").asc())
-                .repartition(1)
-                .write().csv("./output/avgRoomTypePrice");
+                .coalesce(1)
+                .write()
+                .mode("overwrite")
+                .csv("./output/avgRoomTypePrice");
     }
 
     /* Task 1.3 - 3 c) */
-    public static void avgNumReviewPerMonth(Dataset<Row> reviewsDs, Dataset<Row> listingsDs) {
-        Dataset<Row> joinedSet = reviewsDs
-                .select("listing_id", "id", "date")
-                .join(listingsDs.select("city", "id"),
-                        reviewsDs.col("listing_id").equalTo(listingsDs.col("id").as("listing_id")))
-                .toDF("listing_id", "id", "date", "city", "listing_id_2");
-
-        joinedSet
-                .select("id", "date", "city")
-                .map(row -> {
-                    String month = row.getDate(1)
-                            .toString()
-                            .substring(0, 7);
-                    return new Tuple3<>(row.getInt(0), month, row.getString(2));
-                }, Encoders.tuple(Encoders.INT(), Encoders.STRING(), Encoders.STRING()))
-                .toDF("id", "date", "city")
-                .groupBy("date", "city")
-                .count()
-                .orderBy(functions.col("count").desc())
+    public static void avgNumReviewPerMonth(Dataset<Row> listingsDs) {
+        listingsDs
+                .select("city", "reviews_per_month")
+                .groupBy("city")
+                .agg(functions.avg("reviews_per_month"))
                 .coalesce(1)
                 .write()
+                .mode("overwrite")
                 .csv("./output/avgNumReviewPerMonth");
+
     }
 
     /* Task 1.3 - 3 d) */
@@ -85,6 +76,7 @@ public class Task3 {
                 .orderBy(functions.col("nightsPerYear").desc())
                 .coalesce(1)
                 .write()
+                .mode("overwrite")
                 .csv("./output/estimatedBookingsPerYear");
 
     }
@@ -113,6 +105,7 @@ public class Task3 {
                 .orderBy(functions.col("moneySpent").desc())
                 .coalesce(1)
                 .write()
+                .mode("overwrite")
                 .csv("./output/moneySpentPerYear");
     }
 }
