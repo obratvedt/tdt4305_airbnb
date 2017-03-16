@@ -5,16 +5,11 @@ import org.scalatest.EncodedOrdering;
 import scala.Double;
 import scala.Tuple2;
 import scala.Tuple3;
-import schemas.ListingsSchema;
-import schemas.ReviewSchema;
 import tasks.Task2;
 import tasks.Task3;
 import tasks.Task4;
 import tasks.Task5;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class SparkMain {
 
@@ -23,7 +18,6 @@ public class SparkMain {
                 .read()
                 .option("delimiter", "\t")
                 .option("header", true)
-                .schema(ReviewSchema.getReviewSchema())
                 .csv("airbnb_datasets/reviews_us.csv");
     }
 
@@ -33,7 +27,6 @@ public class SparkMain {
                 .option("delimiter", "\t")
                 .option("header", true)
                 .option("inferschema", true)
-                //.schema(ListingsSchema.getListingsSchema())
                 .csv("airbnb_datasets/listings_us.csv");
     }
 
@@ -61,8 +54,8 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
+        Task5.richestGuest(getReviewDs(sparkSession), getListingDs(sparkSession));
 
-        
     }
 
 }

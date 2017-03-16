@@ -39,7 +39,7 @@ public class Task2 {
                 .distinct()
                 .collectAsList();
 
-        for (Row city : cities){
+        for (Row city : cities) {
             System.out.println(city.get(0));
         }
     }
