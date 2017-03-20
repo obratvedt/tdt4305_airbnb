@@ -1,17 +1,11 @@
 
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.scalatest.EncodedOrdering;
-import scala.Double;
-import scala.Tuple2;
-import scala.Tuple3;
-import tasks.Task2;
 import tasks.Task3;
-import tasks.Task4;
 import tasks.Task5;
-
+import tasks.Task6;
 
 public class SparkMain {
+
 
     private static Dataset<Row> getReviewDs(SparkSession sparkSession) {
         return sparkSession
@@ -40,12 +34,15 @@ public class SparkMain {
 
     }
 
-    //Not working yet, need a parser.
-    private static Dataset<Row> getNeighbourhoodsDs(SparkSession sparkSession) {
+    private static Dataset<Row> getNeighbourhoodsTest(SparkSession sparkSession) {
         return sparkSession
                 .read()
-                .json("airbnb_datasets/neighbourhoods.geojson");
+                .option("delimiter", "\t")
+                .option("header", true)
+                .option("inferschema", true)
+                .csv("airbnb_datasets/neighborhood_test.csv");
     }
+
 
     public static void main(String[] args) {
         SparkSession sparkSession = SparkSession
@@ -54,8 +51,9 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
-        Task5.richestGuest(getReviewDs(sparkSession), getListingDs(sparkSession));
-
+        /*
+         * Insert code here to run Spark jobs
+         */
     }
 
 }
