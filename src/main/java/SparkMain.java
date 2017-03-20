@@ -1,14 +1,11 @@
 
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.scalatest.EncodedOrdering;
-import scala.Double;
-import scala.Tuple2;
-import scala.Tuple3;
-import tasks.*;
-
+import tasks.Task3;
+import tasks.Task5;
+import tasks.Task6;
 
 public class SparkMain {
+
 
     private static Dataset<Row> getReviewDs(SparkSession sparkSession) {
         return sparkSession
@@ -37,7 +34,7 @@ public class SparkMain {
 
     }
 
-    private static Dataset<Row> getNeighbourhoodsTest(SparkSession sparkSession){
+    private static Dataset<Row> getNeighbourhoodsTest(SparkSession sparkSession) {
         return sparkSession
                 .read()
                 .option("delimiter", "\t")
@@ -46,12 +43,6 @@ public class SparkMain {
                 .csv("airbnb_datasets/neighborhood_test.csv");
     }
 
-    //Not working yet, need a parser.
-    private static Dataset<Row> getNeighbourhoodsDs(SparkSession sparkSession) {
-        return sparkSession
-                .read()
-                .json("airbnb_datasets/neighbourhoods.geojson");
-    }
 
     public static void main(String[] args) {
         SparkSession sparkSession = SparkSession
@@ -60,11 +51,9 @@ public class SparkMain {
                 .master("local[*]")
                 .getOrCreate();
 
-        Dataset<Row> listings = getListingDs(sparkSession);
-        Dataset<Row> neighbourhoodTest = getNeighbourhoodsTest(sparkSession);
-
-        Task6.percentMatchWithTest(listings, neighbourhoodTest);
-
+        /*
+         * Insert code here to run Spark jobs
+         */
     }
 
 }
