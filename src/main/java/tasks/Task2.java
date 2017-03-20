@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Task2 {
+
     /* Task 1.3 - 2 b) */
     public static void distinctListings(Dataset<Row> listingsDs) {
         List<String> results = new ArrayList<>();

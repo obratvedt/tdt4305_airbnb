@@ -4,7 +4,6 @@ package tasks;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
-import scala.Tuple3;
 import scala.Tuple4;
 
 import static org.apache.spark.sql.functions.col;
@@ -34,7 +33,7 @@ public class Task4 {
         System.out.println("numWithMutiple:" + numHostMultipleListings);
 
         /* 11.5% of all hosts have multiple listings */
-        return ((float)numHostMultipleListings / all);
+        return ((float) numHostMultipleListings / all);
     }
 
     /*  Task 1.3 - 4 c) */
@@ -42,6 +41,7 @@ public class Task4 {
         Dataset<Row> availableCalendar = calendar
                 .filter(functions.col("available").equalTo("f"));
 
+        //Joins the litings DS and the calendar DS, groups by the city and host_id and sums up the price for each group
         Dataset<Row> sumPrice = listings.select("id", "city", "price", "host_id")
                 .map(row ->
                                 new Tuple4<Integer, String, Float, Integer>(
@@ -59,9 +59,12 @@ public class Task4 {
                 .agg(functions.sum("price").as("sum_price"))
                 .orderBy("sum_price");
 
+        //Creates a window in order to make a ranking for each grouping
         WindowSpec w = Window.partitionBy(sumPrice.col("city"))
                 .orderBy(sumPrice.col("sum_price").desc());
 
+        //Creates a rank column for each grouping based on the window, and removes every row that has ranking higher than 3
+        //Then removes the rank column.
         sumPrice
                 .withColumn("rank", row_number().over(w))
                 .where(col("rank").$less$eq(3))

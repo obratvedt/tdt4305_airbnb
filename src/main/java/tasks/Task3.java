@@ -12,6 +12,7 @@ public class Task3 {
     /* Task 1.3 - 3 a) */
     public static void avgCityPrice(Dataset<Row> listingsDs) {
         listingsDs.select("city", "price")
+                //Removing $ and , from the price fields and maps it to float to do calculations
                 .map(row -> {
                     String priceString = row.getString(1);
                     float price = Float.valueOf(priceString
@@ -19,6 +20,7 @@ public class Task3 {
                             .replace(",", ""));
                     return new Tuple2<>(row.getString(0), price);
                 }, Encoders.tuple(Encoders.STRING(), Encoders.FLOAT()))
+                //Each column is has the name "value" after the mapping. Using toDF to create proper column names again
                 .toDF("city", "price")
                 .groupBy("city")
                 .agg(functions.avg("price").as("avgprice"))
@@ -26,17 +28,20 @@ public class Task3 {
                 .coalesce(1)
                 .write()
                 .mode("overwrite")
-                .csv("./output/avgCityPrice");
+                .option("header", true)
+                .csv("./output/3a");
     }
 
     /* Task 1.3 - 3 b) */
     public static void avgRoomTypePrice(Dataset<Row> listingsDs) {
         listingsDs.select("city", "room_type", "price")
+                //Removing $ and , from the price fields and maps it to float to do calculations
                 .map(row -> new Tuple3<String, String, Float>(row.getAs("city"), row.getAs("room_type"), Float.valueOf(
                         ((String) row.getAs("price"))
                                 .replace("$", "")
                                 .replace(",", "")))
                         , Encoders.tuple(Encoders.STRING(), Encoders.STRING(), Encoders.FLOAT()))
+                //Each column is has the name "value" after the mapping. Using toDF to create proper column names again
                 .toDF("city", "room_type", "price")
                 .groupBy("city", "room_type")
                 .agg(functions.avg("price"))
@@ -44,7 +49,8 @@ public class Task3 {
                 .coalesce(1)
                 .write()
                 .mode("overwrite")
-                .csv("./output/avgRoomTypePrice");
+                .option("header", true)
+                .csv("./output/3b");
     }
 
     /* Task 1.3 - 3 c) */
@@ -56,7 +62,8 @@ public class Task3 {
                 .coalesce(1)
                 .write()
                 .mode("overwrite")
-                .csv("./output/avgNumReviewPerMonth");
+                .option("header", true)
+                .csv("./output/3c");
 
     }
 
@@ -77,7 +84,8 @@ public class Task3 {
                 .coalesce(1)
                 .write()
                 .mode("overwrite")
-                .csv("./output/estimatedBookingsPerYear");
+                .option("header", true)
+                .csv("./output/3d");
 
     }
 
@@ -89,6 +97,7 @@ public class Task3 {
 
         listingsDs
                 .select("city", "reviews_per_month", "price")
+                //Removing $ and , from the price fields and maps it to float to do calculations
                 .map(row -> new Tuple3<>(
                         row.getAs("city"), row.getAs("reviews_per_month"),
                         Float.valueOf(
@@ -96,6 +105,7 @@ public class Task3 {
                                         .replace("$", "")
                                         .replace(",", ""))
                 ), Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE(), Encoders.FLOAT()))
+                //Each column is has the name "value" after the mapping. Using toDF to create proper column names again
                 .toDF("city", "reviews_per_month", "price")
                 .groupBy("city")
                 .agg(functions.sum(functions.col("reviews_per_month")
@@ -106,6 +116,7 @@ public class Task3 {
                 .coalesce(1)
                 .write()
                 .mode("overwrite")
-                .csv("./output/moneySpentPerYear");
+                .option("header", true)
+                .csv("./output/3e");
     }
 }
