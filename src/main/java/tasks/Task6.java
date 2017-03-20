@@ -74,10 +74,10 @@ public class Task6 implements Serializable {
                         .as("id"));
         long count = joinedSet.count();
         long filteredCount = joinedSet
-                .filter( functions.col("neighbourhood").equalTo("my_neighbourhood") )
+                .filter( functions.col("neighbourhood").equalTo(functions.col("my_neighbourhood")) )
                 .count();
 
-        System.out.println(String.format("All: %l, filtered: %l, percent: %l", count, filteredCount, filteredCount/count));
+        System.out.println(String.format("All: %d, filtered: %d, percent: %d", count, filteredCount, filteredCount/count));
 
     }
 
