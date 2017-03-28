@@ -25,7 +25,7 @@ public class IdfFinder {
      * @param words words which frequencies need to be calculated
      * @return inverseDocumentFrequency
      */
-    public Dataset<Tuple2<String, Long>> inverseDocumentFrequency(Dataset<String> descriptions, String words){
+    public static Dataset<Tuple2<String, Long>> inverseDocumentFrequency(Dataset<String> descriptions, String words){
         long documentCount = descriptions.count();
 
 
