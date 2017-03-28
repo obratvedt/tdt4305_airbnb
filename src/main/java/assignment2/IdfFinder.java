@@ -1,16 +1,16 @@
 package assignment2;
 
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsDatasetFactory;
+import org.apache.spark.InternalAccumulator;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.functions;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
 import javax.xml.crypto.Data;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -25,39 +25,22 @@ public class IdfFinder {
      * @param words words which frequencies need to be calculated
      * @return inverseDocumentFrequency
      */
-    public static Dataset<Tuple2<String, Long>> inverseDocumentFrequency(Dataset<String> descriptions, String words){
+    public static void inverseDocumentFrequency(Dataset<String> descriptions, String words){
         long documentCount = descriptions.count();
+        List<String> wordList = Arrays.asList(words.split(" "));
+
+        descriptions
+                .toJavaRDD()
+                .map(s -> new HashSet<String>(Arrays.asList(s.split(" "))).toString().replace(",", "").replace("]", "").replace("[", ""))
+                .flatMap(s -> Arrays.asList(s.split(" ")).iterator())
+                .filter(s -> wordList.contains(s))
+                .mapToPair(s -> new Tuple2<String, Integer>(s,1))
+                .reduceByKey((a,b) -> a+b)
+                .map(tuple -> new Tuple2<String, Float>(tuple._1,  (float) documentCount/ tuple._2))
+                .coalesce(1)
+                .saveAsTextFile("test");
 
 
-        String wordCounts = descriptions
-                .map( description -> {
-                    final String cleanDescription = " " + description + " ";
-
-                    List<String> matches = Arrays.stream(words.split(" ")).map(word -> {
-                        return cleanDescription.contains(" " + word + " ") ? "t": "f";
-                    }).collect(Collectors.toList());
-
-                    String matchesList = String.join(",", matches);
-                    return matchesList;
-                    //return Tuple2<String, String>("matches", matches);
-                }, Encoders.STRING() )
-                //}, Encoders.tuple(Encoders.STRING(), Encoders.STRING()) )
-                .reduce( (listingMatches, accumulator) -> {
-                    String[] accumulated = accumulator.split(",");
-                    String[] matches = listingMatches.split(",");
-                    for(int i = 0; i> matches.length; i++){
-                        if(matches[i].equals("t")){
-                            int currentValue = Integer.parseInt(accumulated[i]);
-                            accumulated[i] = currentValue + 1 + "";
-                        }
-                    }
-
-                    return String.join(",", accumulated);
-                });
-
-        System.out.println(wordCounts);
-
-        return null;
     }
 
 }
