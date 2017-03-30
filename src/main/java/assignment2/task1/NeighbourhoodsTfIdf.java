@@ -2,8 +2,11 @@ package assignment2.task1;
 
 
 import org.apache.spark.sql.*;
+import scala.Tuple3;
 
 import java.util.Arrays;
+
+import static org.apache.hadoop.yarn.util.StringHelper.join;
 
 public class NeighbourhoodsTfIdf {
     public static void calculateNeighbourhoodsTfIdf(Dataset<Row> listingsDs, Dataset<Row> neighbourhoodsListingsDs, String neighbourhood) {
@@ -19,9 +22,10 @@ public class NeighbourhoodsTfIdf {
                     String cleanedDecsription = row.getAs("description");
                     return Arrays.asList(cleanedDecsription
                             .toLowerCase()
-                            .replaceAll("[^a-z ]", "")
+                            .replaceAll("[^-a-z ]", "")
                             .split(" ")).iterator();
                 }, Encoders.STRING());
+        long wordsInNeighourhood = neighbourhoodWords.count();
 
         neighbourhoodWords.show();
 
@@ -31,21 +35,31 @@ public class NeighbourhoodsTfIdf {
                 .filter(functions.col("description").isNotNull())
                 .map(descRow -> {
                     String description = descRow.getAs("description");
-                    return description.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
                 }, Encoders.STRING());
 
         listingDescriptions.show();
 
-        Dataset<Row> idf = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates());
+        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates());
 
-        idf.show();
+        idfs.show();
 
         neighbourhoodWords
                 .withColumnRenamed("value", "word")
-                .join(idf)
-                .where(neighbourhoodWords.col("word").equalTo(idf.col("word")))
                 .groupBy(functions.col("word"))
-                .agg(functions.count("word").as("count"));
+                .agg(functions.count("word").as("count"))
+                .join(idfs)
+                .where(neighbourhoodWords.col("word").equalTo(idfs.col("word")))
+                .map( row -> {
+                    String word = row.getAs("word");
+                    long count = row.getAs("count");
+                    double tf = (double) count / (double) wordsInNeighourhood;
+                    float idf = row.getAs("idf");
+                    double tfidf = tf * (double) idf;
+
+                    return new Tuple3<>(word, count, tfidf);
+                }, Encoders.tuple(Encoders.STRING(), Encoders.LONG(), Encoders.DOUBLE()) )
+                .show();
 
     }
 }
