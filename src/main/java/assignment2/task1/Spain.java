@@ -1,4 +1,4 @@
-package assignment2;
+package assignment2.task1;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
