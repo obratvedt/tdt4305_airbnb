@@ -36,23 +36,17 @@ public class AltListingsMain {
                 .appName("Airbnb Alternative Listings")
                 .master("local[*]")
                 .getOrCreate();
-
+/*
         String listingId = args[0];
-
-        DateFormat formatter = new SimpleDateFormat("YYYY-MM-DD");
-        try {
-            Date date = formatter.parse(args[1]);
-        } catch (ParseException e) {
-            System.out.println("Not a valid date. Format: YYYY-MM-DD");
-        }
+        String date = args[1];
 
         int percentageHigher = Integer.parseInt(args[2]);
         float kmAway = Float.parseFloat(args[3]);
         int topN = Integer.parseInt(args[4]);
-
+*/
         Dataset<Row> listingsDs = getListingDs(sparkSession);
         Dataset<Row> calendarDs = getCalendarDs(sparkSession);
 
-
+        AlternativeListings.find(listingsDs, calendarDs, null);
     }
 }
