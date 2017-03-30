@@ -1,4 +1,4 @@
-package assignment2;
+package assignment2.task1;
 
 
 import org.apache.spark.sql.*;
@@ -14,7 +14,7 @@ public class ListingsTfIdf {
                 .filter(functions.col("id").equalTo(listingId))
                 .map(descRow -> {
                     String description =  descRow.getAs("description");
-                    return description.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
                 }, Encoders.STRING());
 
         long listingWordCount = words
@@ -26,7 +26,7 @@ public class ListingsTfIdf {
                 .filter(functions.col("description").isNotNull())
                 .map(descRow -> {
                     String description = descRow.getAs("description");
-                    return description.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
                 }, Encoders.STRING());
 
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words);
