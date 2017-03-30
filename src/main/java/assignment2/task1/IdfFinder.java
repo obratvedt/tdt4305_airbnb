@@ -27,9 +27,8 @@ public class IdfFinder {
      * @param words words which frequencies need to be calculated
      * @return inverseDocumentFrequency
      */
-    public static Dataset<Row> inverseDocumentFrequency(Dataset<String> descriptions, Dataset<String> words){
+    public static Dataset<Row> inverseDocumentFrequency(Dataset<String> descriptions, List<String> words){
         long documentCount = descriptions.count();
-        List<String> wordList = Arrays.asList(words.first().split(" "));
 
         return descriptions
                 .map(s -> new HashSet<String>(Arrays.asList(s.split(" "))).toString()
@@ -38,7 +37,7 @@ public class IdfFinder {
                         .replace("[", "")
                 , Encoders.STRING())
                 .flatMap(s -> Arrays.asList(s.split(" ")).iterator(), Encoders.STRING())
-                .filter(s -> wordList.contains(s))
+                .filter(s -> words.contains(s))
                 .groupBy(functions.col("value"))
                 .agg(functions.count("value").as("count"))
                 .map( row -> {

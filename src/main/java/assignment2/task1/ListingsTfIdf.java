@@ -29,7 +29,7 @@ public class ListingsTfIdf {
                     return description.toLowerCase().replaceAll("[^-a-z ]", "");
                 }, Encoders.STRING());
 
-        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words);
+        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words.collectAsList());
 
         words
                 .flatMap( word -> Arrays.asList(word.split(" ")).iterator(), Encoders.STRING() )
