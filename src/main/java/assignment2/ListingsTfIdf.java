@@ -1,24 +1,25 @@
 package assignment2;
 
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.*;
+import scala.Tuple2;
+
+import java.util.Arrays;
 
 public class ListingsTfIdf {
 
     public static void calculateListingsTfIdf(Dataset<Row> listingsDs, Dataset<Row> neighbourhoodsListingsDs, String listingId) {
-        String words = listingsDs
+        Dataset<String> words = listingsDs
                 .select("description")
                 .filter(functions.col("id").equalTo(listingId))
                 .map(descRow -> {
                     String description =  descRow.getAs("description");
                     return description.replaceAll("[^a-zA-Z ]", "").toLowerCase();
-                }, Encoders.STRING())
-                .first();
+                }, Encoders.STRING());
 
-
+        long listingWordCount = words
+                .flatMap( word -> Arrays.asList(word.split(" ")).iterator(), Encoders.STRING() )
+                .count();
 
         Dataset<String> listingDescriptions = listingsDs
                 .select("description")
@@ -28,7 +29,32 @@ public class ListingsTfIdf {
                     return description.replaceAll("[^a-zA-Z ]", "").toLowerCase();
                 }, Encoders.STRING());
 
-        IdfFinder.inverseDocumentFrequency(listingDescriptions, words);
+        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words);
+
+        words
+                .flatMap( word -> Arrays.asList(word.split(" ")).iterator(), Encoders.STRING() )
+                .groupBy(functions.col("value"))
+                .agg(functions.count("value").as("tf"))
+                .join(idfs)
+                .where("value = word")
+                .map( row -> {
+                    String word = row.getAs("value");
+                    long count = row.getAs("tf");
+                    double tf = (double) count / (double) listingWordCount;
+                    float idf = row.getAs("idf");
+                    double tfidf = tf * (double) idf;
+
+                    return new Tuple2<>(word, tfidf);
+                }, Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE()) )
+                .toDF("word", "tfidf")
+                .orderBy(functions.col("tfidf").desc())
+                .limit(100)
+                .coalesce(1)
+                .write()
+                .mode("overwrite")
+                .option("header", true)
+                .option("delimiter", "\t")
+                .csv("output/listingIdf");
 
     }
 }

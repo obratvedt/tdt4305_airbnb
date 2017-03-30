@@ -2,10 +2,12 @@ package assignment2;
 
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsDatasetFactory;
 import org.apache.spark.InternalAccumulator;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.codehaus.janino.Java;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
@@ -25,22 +27,33 @@ public class IdfFinder {
      * @param words words which frequencies need to be calculated
      * @return inverseDocumentFrequency
      */
-    public static void inverseDocumentFrequency(Dataset<String> descriptions, String words){
+    public static Dataset<Row> inverseDocumentFrequency(Dataset<String> descriptions, Dataset<String> words){
         long documentCount = descriptions.count();
-        List<String> wordList = Arrays.asList(words.split(" "));
+        List<String> wordList = Arrays.asList(words.first().split(" "));
 
-        descriptions
-                .toJavaRDD()
-                .map(s -> new HashSet<String>(Arrays.asList(s.split(" "))).toString().replace(",", "").replace("]", "").replace("[", ""))
-                .flatMap(s -> Arrays.asList(s.split(" ")).iterator())
+        return descriptions
+                .map(s -> new HashSet<String>(Arrays.asList(s.split(" "))).toString()
+                        .replace(",", "")
+                        .replace("]", "")
+                        .replace("[", "")
+                , Encoders.STRING())
+                .flatMap(s -> Arrays.asList(s.split(" ")).iterator(), Encoders.STRING())
                 .filter(s -> wordList.contains(s))
-                .mapToPair(s -> new Tuple2<String, Integer>(s,1))
-                .reduceByKey((a,b) -> a+b)
-                .map(tuple -> new Tuple2<String, Float>(tuple._1,  (float) documentCount/ tuple._2))
-                .coalesce(1)
-                .saveAsTextFile("test");
+                .groupBy(functions.col("value"))
+                .agg(functions.count("value").as("count"))
+                .map( row -> {
 
-
+                    String word = row.getAs("value");
+                    float idf = (float) documentCount / ((long) row.getAs("count"));
+                    return RowFactory.create( word, idf );
+                },
+                    RowEncoder.apply(
+                            DataTypes.createStructType( new StructField[]{
+                                            DataTypes.createStructField("word", DataTypes.StringType, true ),
+                                            DataTypes.createStructField("idf", DataTypes.FloatType, true ),
+                                    })
+                    )
+                );
     }
 
 }
