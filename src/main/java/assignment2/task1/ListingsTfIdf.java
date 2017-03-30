@@ -14,7 +14,11 @@ public class ListingsTfIdf {
                 .filter(functions.col("id").equalTo(listingId))
                 .flatMap( descRow -> {
                     String description =  descRow.getAs("description");
-                    String cleanDescription = description.toLowerCase().replaceAll("[^-a-z ]", "");
+                    String cleanDescription = description
+                            .toLowerCase()
+                            .replaceAll("/", " ")
+                            .replaceAll(",", " ")
+                            .replaceAll("[^-a-z ]", "");
                     return Arrays.asList(cleanDescription.split(" ")).iterator();
                 }, Encoders.STRING());
 

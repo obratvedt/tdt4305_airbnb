@@ -1,8 +1,12 @@
 package assignment2.task1;
 
 
+import org.apache.commons.net.telnet.EchoOptionHandler;
 import org.apache.spark.sql.*;
+import scala.Tuple2;
 import scala.Tuple3;
+import scala.Tuple4;
+import scala.Tuple5;
 
 import java.util.Arrays;
 
@@ -22,13 +26,13 @@ public class NeighbourhoodsTfIdf {
                     String decsription = row.getAs("description");
                     return Arrays.asList(decsription
                             .toLowerCase()
+                            .replaceAll(",", " ")
+                            .replaceAll("/", " ")
                             .replaceAll("[^-a-z ]", "")
                             .split(" ")).iterator();
                 }, Encoders.STRING());
 
         long wordsInNeighourhood = neighbourhoodWords.count();
-
-        neighbourhoodWords.show();
 
         /* First idf parameter: Clean listing descriptions */
         Dataset<String> listingDescriptions = listingsDs
@@ -39,11 +43,7 @@ public class NeighbourhoodsTfIdf {
                     return description.toLowerCase().replaceAll("[^-a-z ]", "");
                 }, Encoders.STRING());
 
-        listingDescriptions.show();
-
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates().collectAsList());
-
-        idfs.show();
 
         neighbourhoodWords
                 .withColumnRenamed("value", "_word")
@@ -58,11 +58,17 @@ public class NeighbourhoodsTfIdf {
                     float idf = row.getAs("idf");
                     double tfidf = tf * (double) idf;
 
-                    return new Tuple3<>(word, count, tfidf);
-                }, Encoders.tuple(Encoders.STRING(), Encoders.LONG(), Encoders.DOUBLE()) )
-                .toDF("word", "count", "tfidf")
-                .orderBy(functions.col("tfidf").asc())
-                .show();
+                    return new Tuple2<>(word, tfidf);
+                }, Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE()) )
+                .toDF("word", "tfidf")
+                .orderBy(functions.col("tfidf").desc())
+                .limit(100)
+                .coalesce(1)
+                .write()
+                .mode("overwrite")
+                .option("header", true)
+                .option("delimiter", "\t")
+                .csv("output/neighbourhoodTfIdf");
 
     }
 }
