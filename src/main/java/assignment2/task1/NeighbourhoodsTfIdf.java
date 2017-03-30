@@ -18,6 +18,7 @@ public class NeighbourhoodsTfIdf {
         /* Second parameter for IdfFinder: concatinated descriptions for a neighbourhood */
         Dataset<String> neighbourhoodWords = listingsDs
                 .select("id", "description")
+                .filter(functions.col("description").isNotNull())
                 .join(neighbourhoodsListingsDs)
                 .where(listingsDs.col("id").equalTo(neighbourhoodsListingsDs.col("id")))
                 .toDF("id", "description", "listing_id", "neighbourhood")
