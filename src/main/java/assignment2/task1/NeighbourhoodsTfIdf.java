@@ -19,12 +19,13 @@ public class NeighbourhoodsTfIdf {
                 .toDF("id", "description", "listing_id", "neighbourhood")
                 .where("neighbourhood = '" + neighbourhood + "'")
                 .flatMap( row -> {
-                    String cleanedDecsription = row.getAs("description");
-                    return Arrays.asList(cleanedDecsription
+                    String decsription = row.getAs("description");
+                    return Arrays.asList(decsription
                             .toLowerCase()
                             .replaceAll("[^-a-z ]", "")
                             .split(" ")).iterator();
                 }, Encoders.STRING());
+
         long wordsInNeighourhood = neighbourhoodWords.count();
 
         neighbourhoodWords.show();
@@ -40,18 +41,18 @@ public class NeighbourhoodsTfIdf {
 
         listingDescriptions.show();
 
-        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates());
+        Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates().collectAsList());
 
         idfs.show();
 
         neighbourhoodWords
-                .withColumnRenamed("value", "word")
-                .groupBy(functions.col("word"))
-                .agg(functions.count("word").as("count"))
+                .withColumnRenamed("value", "_word")
+                .groupBy(functions.col("_word"))
+                .agg(functions.count("_word").as("count"))
                 .join(idfs)
-                .where(neighbourhoodWords.col("word").equalTo(idfs.col("word")))
+                .where("_word = word")
                 .map( row -> {
-                    String word = row.getAs("word");
+                    String word = row.getAs("_word");
                     long count = row.getAs("count");
                     double tf = (double) count / (double) wordsInNeighourhood;
                     float idf = row.getAs("idf");
@@ -59,6 +60,8 @@ public class NeighbourhoodsTfIdf {
 
                     return new Tuple3<>(word, count, tfidf);
                 }, Encoders.tuple(Encoders.STRING(), Encoders.LONG(), Encoders.DOUBLE()) )
+                .toDF("word", "count", "tfidf")
+                .orderBy(functions.col("tfidf").asc())
                 .show();
 
     }

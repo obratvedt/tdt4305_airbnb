@@ -12,9 +12,10 @@ public class ListingsTfIdf {
         Dataset<String> words = listingsDs
                 .select("description")
                 .filter(functions.col("id").equalTo(listingId))
-                .map(descRow -> {
+                .flatMap( descRow -> {
                     String description =  descRow.getAs("description");
-                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
+                    String cleanDescription = description.toLowerCase().replaceAll("[^-a-z ]", "");
+                    return Arrays.asList(cleanDescription.split(" ")).iterator();
                 }, Encoders.STRING());
 
         long listingWordCount = words
@@ -32,7 +33,6 @@ public class ListingsTfIdf {
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words.collectAsList());
 
         words
-                .flatMap( word -> Arrays.asList(word.split(" ")).iterator(), Encoders.STRING() )
                 .groupBy(functions.col("value"))
                 .agg(functions.count("value").as("tf"))
                 .join(idfs)
