@@ -12,6 +12,7 @@ public class ListingsTfIdf {
         Dataset<String> words = listingsDs
                 .select("description")
                 .filter(functions.col("id").equalTo(listingId))
+                .filter(functions.col("description").isNotNull())
                 .flatMap( descRow -> {
                     String description =  descRow.getAs("description");
                     String cleanDescription = description
