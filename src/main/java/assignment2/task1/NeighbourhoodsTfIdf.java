@@ -1,21 +1,17 @@
 package assignment2.task1;
 
 
-import org.apache.commons.net.telnet.EchoOptionHandler;
 import org.apache.spark.sql.*;
 import scala.Tuple2;
-import scala.Tuple3;
-import scala.Tuple4;
-import scala.Tuple5;
 
 import java.util.Arrays;
 
-import static org.apache.hadoop.yarn.util.StringHelper.join;
 
 public class NeighbourhoodsTfIdf {
     public static void calculateNeighbourhoodsTfIdf(Dataset<Row> listingsDs, Dataset<Row> neighbourhoodsListingsDs, String neighbourhood) {
 
-        /* Second parameter for IdfFinder: concatinated descriptions for a neighbourhood */
+        // Second parameter for IdfFinder: concatinated descriptions for a neighbourhood
+        //Creates a dataset of all the words in the neighbourhood. Cleaned with regex
         Dataset<String> neighbourhoodWords = listingsDs
                 .select("id", "description")
                 .filter(functions.col("description").isNotNull())
@@ -23,7 +19,7 @@ public class NeighbourhoodsTfIdf {
                 .where(listingsDs.col("id").equalTo(neighbourhoodsListingsDs.col("id")))
                 .toDF("id", "description", "listing_id", "neighbourhood")
                 .where("neighbourhood = '" + neighbourhood + "'")
-                .flatMap( row -> {
+                .flatMap(row -> {
                     String decsription = row.getAs("description");
                     return Arrays.asList(decsription
                             .toLowerCase()
@@ -31,14 +27,13 @@ public class NeighbourhoodsTfIdf {
                             .replaceAll("[^-a-z ]", "")
                             .replaceAll(" +", " ")
                             .replaceAll("-+", "-")
-                            .replaceAll("^-","")
+                            .replaceAll("^-", "")
                             .replaceAll("-$", "")
                             .split(" ")).iterator();
                 }, Encoders.STRING());
 
-        long wordsInNeighourhood = neighbourhoodWords.count();
 
-        /* First idf parameter: Clean listing descriptions */
+        // First idf parameter: Clean listing descriptions
         Dataset<String> listingDescriptions = listingsDs
                 .select("description")
                 .filter(functions.col("description").isNotNull())
@@ -50,19 +45,23 @@ public class NeighbourhoodsTfIdf {
                             .replaceAll("[^-a-z ]", "")
                             .replaceAll(" +", " ")
                             .replaceAll("-+", "-")
-                            .replaceAll("^-","")
+                            .replaceAll("^-", "")
                             .replaceAll("-$", "");
                 }, Encoders.STRING());
-
+        //Calculates the idfs
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates().collectAsList());
 
+        //Counts the words of the neighbourhood descriptions
+        long wordsInNeighourhood = neighbourhoodWords.count();
+
+        //Joins the words from the neighbourhood descriptions with the idf dataset and calculates the TF and the TF-IDF.
         neighbourhoodWords
                 .withColumnRenamed("value", "_word")
                 .groupBy(functions.col("_word"))
                 .agg(functions.count("_word").as("count"))
                 .join(idfs)
                 .where("_word = word")
-                .map( row -> {
+                .map(row -> {
                     String word = row.getAs("_word");
                     long count = row.getAs("count");
                     double tf = (double) count / (double) wordsInNeighourhood;
@@ -70,7 +69,7 @@ public class NeighbourhoodsTfIdf {
                     double tfidf = tf * (double) idf;
 
                     return new Tuple2<>(word, tfidf);
-                }, Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE()) )
+                }, Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE()))
                 .toDF("word", "tfidf")
                 .orderBy(functions.col("tfidf").desc())
                 .limit(100)

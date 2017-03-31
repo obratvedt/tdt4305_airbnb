@@ -4,33 +4,30 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import scala.Tuple4;
 import scala.Tuple5;
-
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 
-/**
- * Created by sigurd on 3/30/17.
- */
 public class AlternativeListings {
 
     static void find(Dataset<Row> listings, Dataset<Row> calendar, String date, int listingId, int percentageHigher, float kmAway, int topN) {
-
+        //Extracts the listing to find alternative listings on
         Row chosenListing = listings
                 .select("id", "amenities", "longitude", "latitude", "room_type", "price")
                 .filter(functions.col("id").equalTo(listingId))
                 .first();
 
+        //Extract the values from the row above
         double latitude = chosenListing.getAs("latitude");
         double longitude = chosenListing.getAs("longitude");
         String roomType = chosenListing.getAs("room_type");
         String amenities = chosenListing.getAs("amenities");
         Float price = parsePrice(chosenListing.getAs("price"));
 
+        //Filters the listings on the room type, distance, common amenities, price.
         Dataset<Row> filteredListings = listings
                 .select("id", "name", "amenities", "room_type", "longitude", "latitude", "price")
                 .filter(functions.col("room_type").equalTo(roomType))
@@ -53,6 +50,8 @@ public class AlternativeListings {
                 })
                 .filter(functions.col("id").notEqual(listingId));
 
+        //removes calendar rows that are not available and not the correct date
+        //joins it with the filtered listings dataset and ordered by the number of common amenities
         calendar
                 .filter(functions.col("available").equalTo("t"))
                 .filter(functions.col("date").equalTo(date))
@@ -71,14 +70,27 @@ public class AlternativeListings {
 
     }
 
+    /**
+     * Helper method to calculate the number of common amenities
+     *
+     * @param requiredAmenities
+     * @param amenities
+     * @return
+     */
     private static Integer haveAmenities(String requiredAmenities, String amenities) {
         Set<String> amenitiesSet = getAmenities(amenities);
         amenitiesSet.retainAll(getAmenities(requiredAmenities));
         return amenitiesSet.size();
     }
 
-    private static Set<String> getAmenities(String amenties) {
-        String[] amenityArray = amenties.replace("{", "")
+    /**
+     * Creates a set of the amenities
+     *
+     * @param amenities
+     * @return
+     */
+    private static Set<String> getAmenities(String amenities) {
+        String[] amenityArray = amenities.replace("{", "")
                 .replace("}", "")
                 .replace("\"", "")
                 .split(",");
