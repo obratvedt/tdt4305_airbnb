@@ -27,9 +27,12 @@ public class NeighbourhoodsTfIdf {
                     String decsription = row.getAs("description");
                     return Arrays.asList(decsription
                             .toLowerCase()
-                            .replaceAll(",", " ")
-                            .replaceAll("/", " ")
+                            .replace(",", " ")
                             .replaceAll("[^-a-z ]", "")
+                            .replaceAll(" +", " ")
+                            .replaceAll("-+", "-")
+                            .replaceAll("^-","")
+                            .replaceAll("-$", "")
                             .split(" ")).iterator();
                 }, Encoders.STRING());
 
@@ -41,7 +44,14 @@ public class NeighbourhoodsTfIdf {
                 .filter(functions.col("description").isNotNull())
                 .map(descRow -> {
                     String description = descRow.getAs("description");
-                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
+                    return description
+                            .toLowerCase()
+                            .replace(",", " ")
+                            .replaceAll("[^-a-z ]", "")
+                            .replaceAll(" +", " ")
+                            .replaceAll("-+", "-")
+                            .replaceAll("^-","")
+                            .replaceAll("-$", "");
                 }, Encoders.STRING());
 
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, neighbourhoodWords.dropDuplicates().collectAsList());

@@ -17,9 +17,12 @@ public class ListingsTfIdf {
                     String description =  descRow.getAs("description");
                     String cleanDescription = description
                             .toLowerCase()
-                            .replaceAll("/", " ")
-                            .replaceAll(",", " ")
-                            .replaceAll("[^-a-z ]", "");
+                            .replace(",", " ")
+                            .replaceAll("[^-a-z ]", "")
+                            .replaceAll(" +", " ")
+                            .replaceAll("-+", "-")
+                            .replaceAll("^-","")
+                            .replaceAll("-$", "");
                     return Arrays.asList(cleanDescription.split(" ")).iterator();
                 }, Encoders.STRING());
 
@@ -32,7 +35,14 @@ public class ListingsTfIdf {
                 .filter(functions.col("description").isNotNull())
                 .map(descRow -> {
                     String description = descRow.getAs("description");
-                    return description.toLowerCase().replaceAll("[^-a-z ]", "");
+                    return description
+                            .toLowerCase()
+                            .replace(",", " ")
+                            .replaceAll("[^-a-z ]", "")
+                            .replaceAll(" +", " ")
+                            .replaceAll("-+", "-")
+                            .replaceAll("^-","")
+                            .replaceAll("-$", "");
                 }, Encoders.STRING());
 
         Dataset<Row> idfs = IdfFinder.inverseDocumentFrequency(listingDescriptions, words.collectAsList());
