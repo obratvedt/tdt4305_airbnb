@@ -61,8 +61,8 @@ public class AlternativeListings {
                                         DataTypes.createStructField("noOfCommonAmenities", DataTypes.IntegerType, true),
                                         DataTypes.createStructField("distance", DataTypes.DoubleType, true),
                                         DataTypes.createStructField("price", DataTypes.FloatType, true),
-                                        DataTypes.createStructField("latitude", DataTypes.DoubleType, true),
-                                        DataTypes.createStructField("londitude", DataTypes.DoubleType, true),
+                                        DataTypes.createStructField("lat", DataTypes.DoubleType, true),
+                                        DataTypes.createStructField("lon", DataTypes.DoubleType, true),
                                         DataTypes.createStructField("image", DataTypes.StringType, true),
                                         DataTypes.createStructField("rating", DataTypes.DoubleType, true),
                                 }
@@ -72,15 +72,14 @@ public class AlternativeListings {
                     Float givenPrice = row.getAs("price");
                     Float maxPrice = price * (1 + (percentageHigher / 100.0f));
                     return givenPrice <= maxPrice;
-                })
-                .filter(functions.col("id").notEqual(listingId));
+                });
 
         calendar
                 .filter(functions.col("available").equalTo("t"))
                 .filter(functions.col("date").equalTo(date))
                 .join(filteredListings)
                 .where("id = listing_id")
-                .select("id", "name", "noOfCommonAmenities", "distance", "price")
+                .select("id", "name", "noOfCommonAmenities", "distance", "price", "lat", "lon", "image", "rating")
                 .orderBy(functions.col("noOfCommonAmenities").desc())
                 .limit(topN)
                 .coalesce(1)
