@@ -1,13 +1,13 @@
 package assignment2.task2;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
-import scala.Tuple4;
-import scala.Tuple5;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import scala.Tuple9;
 
 
+import javax.validation.constraints.Null;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,19 +32,41 @@ public class AlternativeListings {
         Float price = parsePrice(chosenListing.getAs("price"));
 
         Dataset<Row> filteredListings = listings
-                .select("id", "name", "amenities", "room_type", "longitude", "latitude", "price")
+                .select("id", "name", "amenities", "room_type", "longitude", "latitude", "price", "review_scores_rating", "picture_url")
                 .filter(functions.col("room_type").equalTo(roomType))
-                .map(row -> {
+                .map( row -> {
                     double thisLatitude = row.getAs("latitude");
                     double thisLongitude = row.getAs("longitude");
                     double distanceFromListing = Haversine.haversine(latitude, longitude, thisLatitude, thisLongitude);
+                    String image = row.getAs("picture_url");
+
+                    double rating = 0;
+                    try{
+                        rating = row.getAs("review_scores_rating");
+                    }
+                    catch (NullPointerException e){
+                        rating = 0;
+                    }
                     int noOfCommonAmenities = haveAmenities(amenities, row.getAs("amenities"));
                     float thisPrice = parsePrice(row.getAs("price"));
 
-                    return new Tuple5<>(row.getAs("id"), row.getAs("name"), noOfCommonAmenities, distanceFromListing, thisPrice);
+                    return RowFactory.create((int)row.getAs("id"), (String)row.getAs("name"), noOfCommonAmenities,
+                            distanceFromListing, thisPrice, thisLatitude, thisLongitude, image, rating);
 
-                }, Encoders.tuple(Encoders.INT(), Encoders.STRING(), Encoders.INT(), Encoders.DOUBLE(), Encoders.FLOAT()))
-                .toDF("id", "name", "noOfCommonAmenities", "distance", "price")
+                }, RowEncoder.apply(
+                        DataTypes.createStructType(
+                                new StructField[] {
+                                        DataTypes.createStructField("id", DataTypes.IntegerType, true),
+                                        DataTypes.createStructField("name", DataTypes.StringType, true),
+                                        DataTypes.createStructField("noOfCommonAmenities", DataTypes.IntegerType, true),
+                                        DataTypes.createStructField("distance", DataTypes.DoubleType, true),
+                                        DataTypes.createStructField("price", DataTypes.FloatType, true),
+                                        DataTypes.createStructField("latitude", DataTypes.DoubleType, true),
+                                        DataTypes.createStructField("londitude", DataTypes.DoubleType, true),
+                                        DataTypes.createStructField("image", DataTypes.StringType, true),
+                                        DataTypes.createStructField("rating", DataTypes.DoubleType, true),
+                                }
+                        )))
                 .filter(functions.col("distance").$less$eq(kmAway))
                 .filter(row -> {
                     Float givenPrice = row.getAs("price");
