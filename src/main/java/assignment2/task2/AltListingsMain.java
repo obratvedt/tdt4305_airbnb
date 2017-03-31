@@ -36,17 +36,17 @@ public class AltListingsMain {
                 .appName("Airbnb Alternative Listings")
                 .master("local[*]")
                 .getOrCreate();
-/*
-        String listingId = args[0];
+
+        int listingId = Integer.parseInt(args[0]);
         String date = args[1];
 
         int percentageHigher = Integer.parseInt(args[2]);
         float kmAway = Float.parseFloat(args[3]);
         int topN = Integer.parseInt(args[4]);
-*/
+
         Dataset<Row> listingsDs = getListingDs(sparkSession);
         Dataset<Row> calendarDs = getCalendarDs(sparkSession);
 
-        AlternativeListings.find(listingsDs, calendarDs, null);
+        AlternativeListings.find(listingsDs, calendarDs, date, listingId, percentageHigher, kmAway, topN);
     }
 }
