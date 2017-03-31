@@ -4,10 +4,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class AltListingsMain {
 
@@ -29,6 +25,12 @@ public class AltListingsMain {
                 .csv("airbnb_datasets/calendar_us.csv");
 
     }
+
+    /**
+     * Main method for alternative listings
+     *
+     * @param args
+     */
 
     public static void main(String[] args) {
         SparkSession sparkSession = SparkSession

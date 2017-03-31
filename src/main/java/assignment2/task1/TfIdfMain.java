@@ -5,7 +5,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 
-public class Spain {
+public class TfIdfMain {
 
     private static Dataset<Row> getListingDs(SparkSession sparkSession, String pathToDs) {
         return sparkSession
@@ -25,6 +25,11 @@ public class Spain {
                 .csv(pathToDs + "listings_ids_with_neighborhoods.tsv");
     }
 
+    /**
+     * Main method for the TF IDF
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         SparkSession sparkSession = SparkSession
                 .builder()
@@ -38,7 +43,7 @@ public class Spain {
 
         if (args[1].equals("-l")) {
             String listingId = args[2];
-            ListingsTfIdf.calculateListingsTfIdf(listingsDs, neighbourhoodsListingsDs, listingId);
+            ListingsTfIdf.calculateListingsTfIdf(listingsDs, listingId);
 
         } else if (args[1].equals("-n")) {
             String neighbourhood = args[2];
